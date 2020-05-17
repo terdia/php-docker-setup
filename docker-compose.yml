@@ -1,0 +1,51 @@
+version: '3'
+services:
+  application:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: application:latest
+    links:
+      - "application_db:db.application.local"
+    networks:
+     - application_net
+    volumes:
+     - ./application:/var/www/html
+    ports:
+     - 80:80
+    working_dir: /var/www/html
+    depends_on:
+      - application_db
+  application_db:
+    image: mysql:5.7
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_DATABASE: my_db
+      MYSQL_USER: user1
+      MYSQL_PASSWORD: password
+    ports:
+     - 33069:3306
+    networks:
+     - application_net
+    volumes:
+     - applicationdbdata:/var/lib/mysql
+  adminer:
+    image: adminer
+    networks:
+      - application_net
+    depends_on:
+      - application_db
+    environment:
+      ADMINER_DEFAULT_DB_DRIVER: mysql
+      ADMINER_DEFAULT_DB_HOST: application_db
+      ADMINER_DEFAULT_DB_NAME: my_db
+      ADMINER_DESIGN: nette
+      ADMINER_PLUGINS: tables-filter tinymce
+    ports:
+      - 8080:8080
+networks:
+  application_net:
+    driver: bridge
+volumes:
+  applicationdbdata:
+    driver: local
